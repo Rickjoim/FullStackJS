@@ -15,14 +15,18 @@ global.fetch = jest.fn(() =>
 ) as jest.Mock;
 
 describe('Page', () => {
-  it('Deve renderizar o componente Page', () => {
+  it('Deve renderizar os componentes da página', () => {
     render(<Page />);
 
-    const heading = screen.getByRole('heading', {
+    const formHeading = screen.getByRole('heading', {
+      name: /criar nova tarefa/i,
+    });
+    expect(formHeading).toBeInTheDocument();
+
+    const listHeading = screen.getByRole('heading', {
       name: /lista de tarefas/i,
     });
-
-    expect(heading).toBeInTheDocument();
+    expect(listHeading).toBeInTheDocument();
   });
 
   it('Deve renderizar a lista de tarefas', async () => {

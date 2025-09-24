@@ -1,39 +1,37 @@
-# apps/api/Dockerfile
-
-# Estágio 1: Build da Aplicação
-FROM node:18-alpine AS builder
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-# Instala TODAS as dependências (incluindo as de desenvolvimento)
-# para que o processo de build funcione.
-RUN npm install
-
-# Copia o resto do código da aplicação
-COPY . .
-
-# Compila o código TypeScript para JavaScript.
-# Agora o comando 'nest' será encontrado.
-RUN npm run build
-
-# ---
-
-# Estágio 2: Imagem Final de Produção (Otimizada)
-FROM node:18-alpine
+# =================================================================
+# ESTÁGIO 1: Builder
+# Foco: Instalar dependências e compilar a aplicação.
+# =================================================================
+FROM node:22-alpine AS builder
 
 WORKDIR /usr/src/app
 
-# Copia os arquivos de dependência novamente
+# Copia os arquivos de manifesto do pacote da raiz
 COPY package*.json ./
-# Instala APENAS as dependências de produção para a imagem final
-RUN npm install --only=production
 
-# Copia o código já compilado do estágio de build
-COPY --from=builder /usr/src/app/dist ./dist
+# Copia o código-fonte da API e os arquivos de configuração do monorepo
+COPY apps/api apps/api
+COPY tsconfig.json ./
 
-# Expõe a porta que a API vai usar dentro do container
-EXPOSE 3001
+# Instala TODAS as dependências do monorepo para o build
+RUN npm install --legacy-peer-deps
 
-# Comando para iniciar a aplicação em produção
-CMD [ "node", "dist/main" ]
+# Constrói apenas a aplicação da API
+RUN npm run build:api
+
+# =================================================================
+# ESTÁGIO 2: Produção
+# Foco: Criar uma imagem enxuta apenas com o necessário para rodar.
+# =================================================================
+FROM node:22-alpine
+
+WORKDIR /usr/src/app
+
+# Copia os artefatos de build e as dependências de produção do estágio 'builder'
+COPY --from=builder /usr/src/app/dist/apps/api ./dist
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY package*.json ./
+
+EXPOSE 3000
+
+CMD [ "node", "dist/main.js" ]
