@@ -4,8 +4,9 @@ services:
   # Serviço do Backend
   api:
     build:
-      context: ./apps/api
+      context: .
       dockerfile: Dockerfile
+      target: api-final
     ports:
       - "3001:3001"
     restart: unless-stopped
@@ -13,8 +14,9 @@ services:
   # Serviço do Frontend
   web:
     build:
-      context: ./apps/web
+      context: .
       dockerfile: Dockerfile
+      target: web-final
       args:
         NEXT_PUBLIC_API_URL: 'http://localhost:3001'
     ports:
