@@ -1,4 +1,4 @@
-name: CI de Testes
+name: CI de Testes e Build
 
 on:
   push:
@@ -7,15 +7,24 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  validate: # Renomeei o job para "validate" para ser mais descritivo
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Verificar código-fonte
+        uses: actions/checkout@v4
+
       - name: Usar Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm test
+          cache: 'npm' 
+
+      - name: Instalar Dependências
+        run: npm ci
+
+      - name: Rodar Testes
+        run: npm test
+      
+      - name: Verificar Build de Produção
+        run: npm run build --workspaces --if-present
